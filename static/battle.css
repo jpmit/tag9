@@ -1,0 +1,28 @@
+* { margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    background-color: #F4ECC7;
+    color: #9B1728;
+    font-family: "Share Tech Mono", monospace;
+}
+
+
+/*
+#container {
+	 padding-top: 50px;
+	 margin: 0 auto;
+	 width: 800px; 
+}
+*/
+
+canvas {
+	 background-color: black;
+    display: block; /* remove scrollbars */
+}
