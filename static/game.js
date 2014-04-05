@@ -12,10 +12,10 @@ var KEY = {
         UP: 38,
         RIGHT: 39,
         DOWN: 40,
-        // shift
-        THRUST: 16,
         // ctrl (right ctrl intended for use)
-        FIRE: 17
+        THRUST: 17,
+        // shift
+        FIRE: 16
     },
     player2: {
         // wasd
@@ -49,14 +49,22 @@ KEY.allkeys = (function () {
 }());
 console.log(KEY.allkeys);
 
+var GLOBALS = {
+    arenaSize: {xmin: Number.MIN_VALUE,
+                ymin: Number.MIN_VALUE,
+                xmax: Number.MAX_VALUE,
+                ymax: Number.MAX_VALUE,
+               }
+};
+    
+
 // main game module ('module design pattern')
 var GM = (function () {
 
-    // if dummy, we use dummy inputs (see below)
-    var dummy = false;
-
 	 var FPS =  30;
-    var DT = 1 / FPS; // ideal timestep, in seconds
+    var WALLWIDTH = 20; // in pixels
+    GLOBALS.arenaSize.xmin = WALLWIDTH;
+    GLOBALS.arenaSize.ymin = WALLWIDTH;
 
     var then = Date.now();
     var now;
@@ -72,6 +80,10 @@ var GM = (function () {
     function setSize (canvasWidth, canvasHeight) {
         width = canvasWidth;
         height = canvasHeight;
+        // resizing resets the entire canvas context
+        ctx.fillStyle = 'white';
+        GLOBALS.arenaSize.xmax = width - WALLWIDTH;
+        GLOBALS.arenaSize.ymax = height - WALLWIDTH;
     }
 
     function drawSprite (sprite) { 
@@ -82,8 +94,29 @@ var GM = (function () {
 	     ctx.restore(); 
     }
 
-    function addBullet (bullet) {
-        bullets1.push(bullet);
+    function addBullet (num, bullet) {
+        if (num === 1) {
+            bullets1.push(bullet);
+        }
+        else {
+            bullets2.push(bullet);
+        }
+    }
+
+    function removeBullet (num, bullet) {
+        if (num === 1) {
+            bullets1.remove(bullet);
+        }
+        else {
+            bullets2.remove(bullet);
+        }
+    }
+
+    function drawWalls () {
+        ctx.fillRect(0, 0, WALLWIDTH, height);
+        ctx.fillRect(width - WALLWIDTH, 0, WALLWIDTH, height);
+        ctx.fillRect(0, 0, width, WALLWIDTH);
+        ctx.fillRect(0, height - WALLWIDTH, width, WALLWIDTH);
     }
 
     // draw the complete game (called every frame)
@@ -92,6 +125,9 @@ var GM = (function () {
 
 	     // draw a blank screen
 	     ctx.clearRect(0, 0, width, height);
+
+        // arena walls
+        drawWalls();
 
         // ships
         drawSprite(Ship1);
@@ -108,15 +144,21 @@ var GM = (function () {
 
     // update local game state (called every frame)
     function update (dt) {
-        var key, i;
+        var key, i, j, vels, v1, v2;
+
         Ship1.update(dt);
         Ship2.update(dt);
+
         for (i = 0; i < bullets1.length; i++) {
             bullets1[i].update(dt);
         }
         for (i = 0; i < bullets2.length; i++) {
             bullets2[i].update(dt);
         }
+        
+        COLL.collideShip(Ship1, Ship2);
+        COLL.collideBullets(Ship1, bullets2);
+        COLL.collideBullets(Ship2, bullets1);
     }
 
     // process user input (called every frame)
@@ -124,17 +166,6 @@ var GM = (function () {
         Ship1.processInput(KEY.pressed);
         Ship2.processInput(KEY.pressed);
     }    
-
-    // mainloop of game, called every frame
-    function main () {
-
-        processInput();
-	     // update with time in seconds
-	     update(DT);
-
-	     draw();
-
-    }
 
     // called by window.onload
     function init () {
@@ -163,21 +194,59 @@ var GM = (function () {
 
         // configure canvas
         CN.setCanvasSize();
-        ctx.fillStyle = 'white';
     
         // start the game
         Ship1 = new Ship([100, 100], 1);
         Ship2 = new Ship([500, 100], 2);
 
-        // main routine
-        main();
-        setInterval(main, 1000 / FPS);
+        // requestAnimationFrame
+       (function(){
+           var vendors = ['ms', 'moz', 'webkit', 'o'];
+           for(var x = 0; x < vendors.length && !window.requestAnimFrame; ++x) {
+               window.requestAnimFrame = window[vendors[x]+'RequestAnimationFrame'];
+           }
+       }());
+
+        // we use setInterval for the logic, and requestAnimationFrame
+        // for the *drawing only*. If requestAnimationFrame is not
+        // supported, the entire game loop is executed by a single
+        // setTimeout call (hence why we don't have a setTimeout
+        // fallback above).
+        var mainDraw;
+        if (!window.requestAnimFrame) {
+            mainDraw = draw;
+        }
+        else {
+            mainDraw = function () {};
+        }
+        console.log(mainDraw);
+
+        // logic only (and draw if requestAnimationFrame not supported)
+        function main() {
+	         var now = Date.now();
+	         var dt = now - then;
+	         processInput();
+            update(dt / 1000);
+            mainDraw();
+	         then = now;
+        }
+
+        window.setInterval(main, 1000 / FPS);
+            
+        if (window.requestAnimFrame) {
+            function keepDrawing() {
+                draw();
+                window.requestAnimFrame(keepDrawing);
+            }
+            window.requestAnimFrame(keepDrawing);
+        }
     }
     
     // public API
     return {setSize: setSize,
             init: init,
             addBullet: addBullet,
+            removeBullet: removeBullet
             }
 
 }());

@@ -16,7 +16,7 @@ var SHIP = {
 
 var BULLET = {
     v: 500,
-    coolDown: 0.2,
+    coolDown: 0.4,
     tSince: 1000,
     // images for the different bullet types
     img: {}
@@ -28,9 +28,11 @@ var BULLET = {
     var img2 = new Image();
     function onloadBullet(img, bulletNum) {
         BULLET.img[bulletNum] = img;
+        BULLET.width = img.width;
+        BULLET.height = img.height;
         // store half the width of the bullet and half the length
-        BULLET.hwidth = img.width/2;
-        BULLET.hheight = img.height/2;
+        BULLET.hwidth = BULLET.width/2;
+        BULLET.hheight = BULLET.height/2;
     }
     img1.onload = onloadBullet(img1, 1);
     img2.onload = onloadBullet(img2, 2);
@@ -50,8 +52,16 @@ function Bullet(num, x, y, angle) {
     this.vy = -Math.cos(this.angle)*BULLET.v;
 
     this.update = function(dt) {
+        var asize = GLOBALS.arenaSize;
         this.x = this.x + this.vx*dt;
         this.y = this.y + this.vy*dt;
+
+        // check if the bullet is outside the arena.  We ignore the
+        // (negligible) size of the bullets here.
+        if (this.x < asize.xmin || this.x > asize.xmax 
+            || this.y < asize.ymin || this.y > asize.ymax) {
+            GM.removeBullet(num, this);
+        }
     }
 }
 
@@ -151,7 +161,8 @@ function Ship(pos, shipNum) {
     };
 
     this.update = function(dt) {
-        var vmax;
+
+        var vmax, asize;
 
         this.vx = this.vx + this.ax*dt - SHIP.gamma*this.vx*dt;
         this.vy = this.vy + this.ay*dt - SHIP.gamma*this.vy*dt;
@@ -192,20 +203,35 @@ function Ship(pos, shipNum) {
         BULLET.tSince += dt;
         if (this.fired) {
             if (BULLET.tSince > BULLET.coolDown) {
-                GM.addBullet(new Bullet(this.num, this.x + this.hwidth, 
+                GM.addBullet(this.num, new Bullet(this.num, this.x + this.hwidth, 
                                         this.y + this.hheight, this.angle));
                 BULLET.tSince = 0;
             }
         }
-        
+
+        // check for collision with the other player
+
+        // check for collision with arena walls: we make the velocity
+        // in the direction of the wall zero, since otherwise we
+        // 'stick' to the wall.  An alternative is reversing the
+        // velocity (this.vx = -this.vx, etc.), but it seems like this
+        // would change the game quite a lot.
+        asize = GLOBALS.arenaSize;
+        if (this.x < asize.xmin) {
+            this.x = asize.xmin;
+            this.vx = 0;
+        }
+        else if (this.x > asize.xmax - this.width) {
+            this.x = asize.xmax - this.width;
+            this.vx = 0;
+        }
+        if (this.y < asize.ymin) {
+            this.y = asize.ymin;
+            this.vy = 0;
+        }
+        else if (this.y > asize.ymax - this.height) {
+            this.y = asize.ymax - this.height;
+            this.vy = 0;
+        }
     };
-};
-
-Ship.init = function(game) {
-	 this.y = game.height / 2 - Const.PSIZE;
-};
-
-Ship.draw = function(ctx) {
-	 ctx.fillStyle = Const.PCOL;
-	 ctx.fillRect(this.x, this.y, Const.PSIZE, Const.PSIZE);
 };
