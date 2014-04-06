@@ -1,4 +1,5 @@
 // util.js
+// Copyright (c) James Mithen 2014.
 // utility stuff
 
 // used for removing sprites (only bullets in fact)

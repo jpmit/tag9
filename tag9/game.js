@@ -1,4 +1,5 @@
 // game.js
+// Copyright (c) James Mithen 2014.
 // The main game logic.
 
 var canvas = document.getElementById("game");
@@ -337,7 +338,7 @@ var GM = (function () {
         Ship2.update(dt);
 
         if ((Ship1.dead) || (Ship2.dead)) {
-            updateDead();
+            updateDead(dt);
         }
 
         for (i = 0; i < bullets1.length; i++) {

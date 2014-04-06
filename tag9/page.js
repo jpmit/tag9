@@ -1,4 +1,5 @@
 // page.js
+// Copyright (c) James Mithen 2014.
 // setup event handlers on the html page.
 
 (function () {

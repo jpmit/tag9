@@ -1,4 +1,5 @@
 // jukebox.js
+// Copyright (c) James Mithen 2014.
 // a jukebox 'class' for managing music and sfx
 
 var JUKE = {musicVol: 0.4,

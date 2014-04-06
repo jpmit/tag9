@@ -1,4 +1,5 @@
 // canvas.js
+// Copyright (c) James Mithen 2014.
 // Handle canvas resizing.
 
 var CN = {};

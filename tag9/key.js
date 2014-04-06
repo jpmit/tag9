@@ -1,4 +1,5 @@
 // key.js
+// Copyright (c) James Mithen 2014.
 // Keyboard stuff
 
 // track pressed keys

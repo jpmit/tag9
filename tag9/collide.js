@@ -1,4 +1,5 @@
 // collide.js
+// Copyright (c) James Mithen 2014.
 // collision routines used in the game (note these are not the only
 // collision functions used).
 

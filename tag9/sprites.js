@@ -1,4 +1,5 @@
 // sprites.js
+// Copyright (c) James Mithen 2014.
 // Ship (sic) and bullet 'classes' and logic
 
 var SHIP = {
