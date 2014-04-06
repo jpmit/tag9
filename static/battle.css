@@ -9,10 +9,40 @@ html, body {
 
 body {
     background-color: #F4ECC7;
-    color: #9B1728;
     font-family: "Share Tech Mono", monospace;
+    color: white;
 }
 
+h1, h2 {
+    color: #9B1728;
+    display: inline-block;
+}
+
+.scoretxt {
+    color: white;
+    font-size: 1.2em;
+}
+
+button {
+    vertical-align: top;
+    margin-top: 10px;
+    font-family: monospace;
+    background: #FFFFFF;
+}
+
+#sbutton {
+    width: 50px;
+}
+
+select {
+    vertical-align: top;
+    margin-top: 9px;
+}
+
+#topbar {
+    height: 10%;
+    background-color: black;
+}
 
 /*
 #container {

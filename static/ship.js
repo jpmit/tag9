@@ -2,24 +2,37 @@
 // Ship (sic) and bullet logic.
 
 var SHIP = {
-    vmax: 200,  // maximum speed
+    vmax: 300,  // maximum speed
     // if true, 'thruster' is always on
     permanentThrust: true,
-    a: 20,
-    aThrust: 100,
+    a: 30,
+    aThrust: 300,
     gamma: 0.1,
     rotv: 3,
     noRotate: 0,
     leftRotate: -1,
-    rightRotate: 1
+    rightRotate: 1,
+    decaySpeed: 100 / 30,
+    health: 100 // initial health
 };
+
+SHIP.setDecayTime = function (value) {
+    console.log(value);
+    // decay time is time it takes (in seconds) to reach zero health
+    // if not hit at all: we start with 100 points of health, so
+    // decaySpeed = 100 / decayTime.
+    SHIP.decaySpeed = 100 / parseInt(value);
+}
 
 var BULLET = {
     v: 500,
     coolDown: 0.4,
     tSince: 1000,
     // images for the different bullet types
-    img: {}
+    img: {},
+    // how much damage in points (players start with 100) that a
+    // bullet does.
+    damage: 2
 };
 
 // load bullet images
@@ -53,6 +66,9 @@ function Bullet(num, x, y, angle) {
 
     this.update = function(dt) {
         var asize = GLOBALS.arenaSize;
+        var rects = GLOBALS.arenaRects;
+        var i, r, rl;
+
         this.x = this.x + this.vx*dt;
         this.y = this.y + this.vy*dt;
 
@@ -62,10 +78,21 @@ function Bullet(num, x, y, angle) {
             || this.y < asize.ymin || this.y > asize.ymax) {
             GM.removeBullet(num, this);
         }
+
+        // check if bullet has hit one of the obstacles in the arena
+        // (again ignore bullet size).
+        rl = rects.length;
+        for (i = 0; i < rl; ++i) {
+            r = rects[i];
+            if (this.x > r.x && this.x < r.x + r.width &&
+                this.y > r.y && this.y < r.y + r.height) {
+                GM.removeBullet(num, this);
+            }
+        }
     }
 }
 
-function Ship(pos, shipNum) {
+function Ship (pos, shipNum) {
     var img, that;
 
     that = this;
@@ -78,6 +105,10 @@ function Ship(pos, shipNum) {
         that.hheight = img.height/2;
     };
     this.img = img;
+    this.health = SHIP.health;
+    this.dead = false;
+    this.flashing = false;
+    this.flasht = 0;
 
     // num should be either 1 (player 1) or 2 (player 2)
     this.num = shipNum;
@@ -203,13 +234,13 @@ function Ship(pos, shipNum) {
         BULLET.tSince += dt;
         if (this.fired) {
             if (BULLET.tSince > BULLET.coolDown) {
+                // play soundeffect
+                JUKE.jukebox.playSfx('laser' + this.num);
                 GM.addBullet(this.num, new Bullet(this.num, this.x + this.hwidth, 
                                         this.y + this.hheight, this.angle));
                 BULLET.tSince = 0;
             }
         }
-
-        // check for collision with the other player
 
         // check for collision with arena walls: we make the velocity
         // in the direction of the wall zero, since otherwise we
@@ -232,6 +263,72 @@ function Ship(pos, shipNum) {
         else if (this.y > asize.ymax - this.height) {
             this.y = asize.ymax - this.height;
             this.vy = 0;
+        }
+
+        // check if we have hit one of the obstacles in the arena
+        // (again ignore bullet size).
+        var asize = GLOBALS.arenaSize;
+        var rects = GLOBALS.arenaRects;
+        var i, r, rl, offx, offy, side;
+        rl = rects.length;
+        for (i = 0; i < rl; ++i) {
+            r = rects[i];
+            if (this.x + this.width > r.x && this.x < r.x + r.width &&
+                this.y + this.height > r.y && this.y < r.y + r.height) {
+
+                // did we hit it from the side (left or right direction)?
+                side = (this.y + this.hheight > r.y && this.y + this.hheight < r.y + r.height)
+
+                if (side) {
+                    offy = 0;
+                    this.vx = 0;
+                    if (this.x > r.x) {
+                        // hit from the right
+                        offx = (r.x + r.width) - this.x;
+                    }
+                    else {
+                        // hit from the left
+                        offx = - (this.x + this.width - r.x);
+                    }
+                }
+                else {
+                    offx = 0;
+                    this.vy = 0;
+                    if (this.y < r.y) {
+                        // hit from top
+                        offy = r.y - (this.y + this.height);
+                    }
+                    else {
+                        // hit from bottom
+                        offy = r.y + r.height - this.y;
+                    }
+                }
+
+                this.x = this.x + offx;
+                this.y = this.y + offy;
+
+            }
+        }
+
+        // reduce health
+        this.health = this.health - SHIP.decaySpeed*dt;
+
+        var tleft = this.health / SHIP.decaySpeed;
+        if (tleft < 5) {
+            JUKE.jukebox.playSfx('alarm');
+            this.flashing = true;
+            this.flasht += dt;
+            this.flasht = this.flasht % 0.2;
+            if (this.flasht < 0.1) {
+                this.alpha = 0.1;
+            }
+            else {
+                this.alpha = 1;
+            }
+        }
+
+        if (this.health < 0.5) {
+            this.dead = true
         }
     };
 };

@@ -6,6 +6,8 @@ var COLL = (function () {
         if ((Ship1.x + Ship1.width > Ship2.x) && (Ship1.x < Ship2.x + Ship2.width)
 
             && (Ship1.y + Ship1.height > Ship2.y) && (Ship1.y < Ship2.y + Ship2.height)) {
+
+            JUKE.jukebox.playSfx('shipcollide');
             
             if (((Ship1.vx > 0) && (Ship2.vx > 0)) || ((Ship1.vx < 0) && (Ship2.vx < 0))) {
                 // same direction, reverse the velocity of whichever one going faster
@@ -48,6 +50,9 @@ var COLL = (function () {
         for (i = 0; i < bullets.length; ++i) {
             if ((bullets[i].x > Ship.x) && (bullets[i].x < Ship.x + Ship.width)
                 && (bullets[i].y > Ship.y) && (bullets[i].y < Ship.y + Ship.height)) {
+                JUKE.jukebox.playSfx('hit' + bulletNum);
+                // reduce health of ship
+                Ship.health -= BULLET.damage;
                 GM.removeBullet(bulletNum, bullets[i]);
             }
         }

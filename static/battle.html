@@ -4,18 +4,42 @@
     <meta charset="UTF-8">
     <link href='http://fonts.googleapis.com/css?family=Share+Tech+Mono' rel='stylesheet' type='text/css'>
     <link href="battle.css" type="text/css" rel="stylesheet" />
-  <title>Battle</title>
+  <title>Space Battle!</title>
   </head>
 
   <body>
+    <div id="topbar">
+      <h1>Space Battle!</h1>
+      <h2>Sound</h2>
+      <button id="sbutton" type="button" value="on">on</button>
+      <select id="gametype">
+        <option value ="twoplayer">1P vs 2P</option>
+        <option value ="ai">1P vs AI</option>
+      </select>
+      <span>Decay time:</span>
+      <select id="decaytime">
+        <option value ="10">10</option>
+        <option value ="30" selected="">30</option>
+        <option value ="60">60</option>
+      </select>
+      <span class="scoretxt">Score:</span>
+      <span>1P</span>
+      <span id="p1score">0</span>
+      <span id="player2id">2P</span>
+      <span id="p2score">0</span>
+      <button id="zeroscore" type="button">reset score</button>
+      <button id="instructions" type="button">Instructions</button>
+    </div>
     <div id="container">
 	   <canvas id="game"></canvas>
     </div>
     <script src="util.js"></script>
+    <script src="jukebox.js"></script>
     <script src="collide.js"></script>
     <script src="ship.js"></script>
     <script src="game.js"></script>
     <script src="canvas.js"></script>
+    <script src="page.js"></script>
     <script>
       window.onload = function() {
       GM.init();

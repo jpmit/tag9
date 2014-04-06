@@ -5,7 +5,8 @@ var CN = {};
 
 CN.setCanvasSize = function () {
     canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    console.log(document.getElementById("topbar").height);
+    canvas.height = 0.9*window.innerHeight;
     console.log(canvas.width, canvas.height);
 
     if (GM) {
