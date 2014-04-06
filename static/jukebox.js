@@ -3,12 +3,15 @@ var JUKE = {};
 JUKE.Jukebox = function () {
     var test = new Audio();
     var ext;
-    this.music = {};
-    this.sfx = {};
     var playingMusic = false;
     var playingName = "";
     var muted = false;
 
+    this.music = {};
+    this.sfx = {};
+
+    // it doesn't seem that this type of thing is bulletproof, but
+    // there doesn't seem to be a better alternative.
     if (test.canPlayType("audio/ogg") !== "") {
         ext = "ogg";
     }
@@ -70,11 +73,9 @@ JUKE.Jukebox = function () {
     };
 }
 
-// jukebox for audio
+// create jukebox for in game audio
 JUKE.jukebox = new JUKE.Jukebox();
-JUKE.jukebox.loadMusic({'main': 'audio/Game_Track',
-                        'menu': 'audio/Menu_Track'
-                       });
+JUKE.jukebox.loadMusic({'main': 'audio/Game_Track'});
 JUKE.jukebox.loadSfx({'laser1': 'audio/laser1',
                       'laser2': 'audio/laser2',
                       'hit1' : 'audio/hit1',

@@ -76,7 +76,9 @@ var GM = (function () {
     var width = canvas.width;
     var height = canvas.height;
 
-    var Ship1, Ship2;
+    var Ship1 = new Ship([0.05*width, 0.8*height], 1);
+    var Ship2 = new Ship([0.9*width, 0.1*height], 2);
+
     var bullets1 = [];
     var bullets2 = [];
     var inPlay;
@@ -331,10 +333,8 @@ var GM = (function () {
     function startGame() {
         inPlay = false;
         GLOBALS.isDead = false;
-        Ship1 = new Ship([0.05*width, 0.8*height], 1);
-        Ship2 = new Ship([0.9*width, 0.1*height], 2);
-        bullets1 = [];
-        bullets2 = [];
+        Ship1.reset([0.05*width, 0.8*height]);
+        Ship2.reset([0.9*width, 0.1*height]);
     }
 
     // main update function (called every frame)
@@ -351,6 +351,8 @@ var GM = (function () {
         if ((Ship1.dead) || (Ship2.dead)) {
             if (!GLOBALS.isDead) {
                 // first time through here
+                bullets1 = [];
+                bullets2 = [];
                 if (Ship1.dead && Ship2.dead) {
                     deadText = 'DRAW';
                 }

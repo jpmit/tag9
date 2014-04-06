@@ -47,8 +47,8 @@ var BULLET = {
     }
     img1.onload = onloadBullet(img1, 1);
     img2.onload = onloadBullet(img2, 2);
-    img1.src = "bullet1.png";
-    img2.src = "bullet2.png";
+    img1.src = "images/bullet1.png";
+    img2.src = "images/bullet2.png";
 }());
 
 function Bullet(num, x, y, angle) {
@@ -95,7 +95,7 @@ function Ship (pos, shipNum) {
 
     that = this;
     img = new Image();
-    img.src = "spaceship" + shipNum + ".png";
+    img.src = "images/spaceship" + shipNum + ".png";
     img.onload = function () {
         that.width = img.width;
         that.height = img.height;
@@ -103,13 +103,10 @@ function Ship (pos, shipNum) {
         that.hheight = img.height/2;
     };
     this.img = img;
-    this.health = SHIP.health;
-    this.dead = false;
-    this.flashing = false;
-    this.flasht = 0;
 
     // num should be either 1 (player 1) or 2 (player 2)
     this.num = shipNum;
+
     if (this.num === 1) {
         this.keys = KEY.player1;
     }
@@ -117,20 +114,25 @@ function Ship (pos, shipNum) {
         this.keys = KEY.player2;
     }
 
-    // position, velocity and accelaration
-    this.x = pos[0];
-    this.y = pos[1];
-    this.vx = 0;
-    this.vy = 0;
-    this.ax = 0;
-    this.ay = 0;
-    // orientation angle measure clockwise from 'up' direction
-    this.angle = 0;
-    this.rot = SHIP.noRotate;
-    // thruster on this frame?
-    this.thruster = false;
-    // fired a bullet this frame?
-    this.fired = false;
+    this.reset = function (pos, angle) {
+        this.health = SHIP.health;
+        this.dead = false;
+        this.flasht = 0;
+        this.x = pos[0];
+        this.y = pos[1];
+        this.vx = 0;
+        this.vy = 0;
+        this.ax = 0;
+        this.ay = 0;
+        this.angle = angle || 0;
+        this.rot = SHIP.noRotate;
+        this.thruster = false;
+        this.fired = false;
+        this.alpha = 1;
+    }
+    
+    // when created, call reset to set initial data
+    this.reset(pos);
 
     this.processInput = function(pressed) {
         var a, keys = this.keys;
@@ -320,7 +322,6 @@ function Ship (pos, shipNum) {
             // 5 seconds left
             if (this.health < 5*SHIP.decaySpeed) {
                 JUKE.jukebox.playSfx('alarm');
-                this.flashing = true;
                 this.flasht += dt;
                 this.flasht = this.flasht % 0.2;
                 if (this.flasht < 0.1) {
