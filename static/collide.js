@@ -1,10 +1,15 @@
-var COLL = (function () {
+// collide.js
+// collision routines used in the game (note these are not the only
+// collision functions used).
 
-    // check for collision between Ship1 and Ship2 and adjust velocities accordingly
+var COLL = (function () {
+    // check for collision between Ship1 and Ship2 and adjust
+    // velocities accordingly.  Note the collision physics is 'made
+    // up' for simplicity (i.e. not a 'true' elastic / inelastic
+    // collision).
     function collideShip(Ship1, Ship2) {
 
         if ((Ship1.x + Ship1.width > Ship2.x) && (Ship1.x < Ship2.x + Ship2.width)
-
             && (Ship1.y + Ship1.height > Ship2.y) && (Ship1.y < Ship2.y + Ship2.height)) {
 
             JUKE.jukebox.playSfx('shipcollide');

@@ -3,53 +3,8 @@
 
 var canvas = document.getElementById("game");
 
-// track pressed keys
-var KEY = {
-    // map actions to javascript key codes
-    player1: {
-        // normal arrow keys
-        LEFT: 37,
-        UP: 38,
-        RIGHT: 39,
-        DOWN: 40,
-        // ctrl (right ctrl intended for use)
-        THRUST: 17,
-        // shift
-        FIRE: 16
-    },
-    player2: {
-        // wasd
-        LEFT: 65,
-        UP: 87,
-        RIGHT: 68,
-        DOWN: 83,
-        // tab
-        THRUST: 9,
-        // q
-        FIRE: 81
-    },
-	 pressed: {},
-    // array storing all used key codes
-    allkeys: [],
-    // store events (clear this every frame)
-    events: []
-};
-
-KEY.allkeys = (function () {
-    var pl, k, i, allkeys = [];
-    var parray = [KEY.player1, KEY.player2]
-    for (i = 0; i != parray.length; ++i) {
-        pl = parray[i];
-        for (k in pl) {
-            if (pl.hasOwnProperty(k)) {
-                allkeys.push(pl[k]);
-            }
-        }
-    }
-    return allkeys;
-}());
-
-var GLOBALS = {
+// global game state that can be accessed by one and all
+var GMSTATE = {
     arenaSize: {xmin: Number.MIN_VALUE,
                 ymin: Number.MIN_VALUE,
                 xmax: Number.MAX_VALUE,
@@ -57,18 +12,22 @@ var GLOBALS = {
                },
     // the rectangles inside the arena, neither the players nor the
     // bullets can pass through these.
-    arenaRects : []
+    arenaRects : [],
+    // is at least one of the players currently dead?
+    isDead: false
 };
-    
 
 // main game module ('module design pattern')
 var GM = (function () {
 
-	 var FPS =  30;
+    // frames per second for the logic (and the rendering if
+    // RequestAnimationFrame is not supported)
+	 var FPS =  40;
     var WALLWIDTH = 5; // in pixels
-    GLOBALS.arenaSize.xmin = WALLWIDTH;
-    GLOBALS.arenaSize.ymin = WALLWIDTH;
+    GMSTATE.arenaSize.xmin = WALLWIDTH;
+    GMSTATE.arenaSize.ymin = WALLWIDTH;
 
+    // times used in main loop
     var then = Date.now();
     var now;
 
@@ -81,12 +40,17 @@ var GM = (function () {
 
     var bullets1 = [];
     var bullets2 = [];
+
+    // are we currently playing (not waiting for death animation)?
     var inPlay;
     var deadText;
+    var deadTime;
 
     // the three starfields that make up the background
     var stars1, stars2, stars3;
 
+    // thinly adapted from 'Professional HTML5 Mobile Game
+    // Development' by Pascal Rettig.
     function Starfield (speed, opacity, starsPerArea, clear, color) {
         var stars = document.createElement("canvas");
         var numStars = Math.round(width*height*starsPerArea);
@@ -162,17 +126,17 @@ var GM = (function () {
         arenaRects.push(r21);
         arenaRects.push(r22);
         arenaRects.push(rc);
-        GLOBALS.arenaRects = arenaRects;
+        GMSTATE.arenaRects = arenaRects;
     }
 
     // called when we resize the canvas (and also initially) warning!
-    // resizing resets the entire canvas context (e.g. ctx.fillStyle)
+    // resizing resets the entire canvas context (e.g. ctx.fillStyle).
     function setSize (canvasWidth, canvasHeight) {
         width = canvasWidth;
         height = canvasHeight;
 
-        GLOBALS.arenaSize.xmax = width - WALLWIDTH;
-        GLOBALS.arenaSize.ymax = height - WALLWIDTH;
+        GMSTATE.arenaSize.xmax = width - WALLWIDTH;
+        GMSTATE.arenaSize.ymax = height - WALLWIDTH;
 
         stars1 = new Starfield(20, 0.2, 0.001, true, "#FFF");
         stars2 = new Starfield(50, 0.4, 0.001, false, "#F00");
@@ -184,10 +148,12 @@ var GM = (function () {
         ctx.strokeStyle = '#FFF';
         ctx.font = "20px Monospace";
 
-        // call start game (will reset ship positions)
-        startGame();
+        // set game state to start (will reset ship positions)
+        setGameStart();
     }
 
+    // general function for drawing a 'sprite' at a given angle, used
+    // to draw ships and bullets.
     function drawSprite (sprite) { 
 	     ctx.save(); 
 	     ctx.translate(sprite.x + sprite.hwidth, sprite.y + sprite.hheight);
@@ -208,6 +174,7 @@ var GM = (function () {
         }
     }
 
+    // this uses augmented Array method (remove), see util.js
     function removeBullet (num, bullet) {
         if (num === 1) {
             bullets1.remove(bullet);
@@ -217,25 +184,17 @@ var GM = (function () {
         }
     }
 
-    // not currently used: the walls are there but transparent
-    function drawWalls () {
-
-        ctx.fillRect(0, 0, WALLWIDTH, height);
-        ctx.fillRect(width - WALLWIDTH, 0, WALLWIDTH, height);
-        ctx.fillRect(0, 0, width, WALLWIDTH);
-        ctx.fillRect(0, height - WALLWIDTH, width, WALLWIDTH);
-    }
-
     function drawArenaRects () {
         var i, rl, r;
-        rl = GLOBALS.arenaRects.length;
+        rl = GMSTATE.arenaRects.length;
         ctx.fillStyle = '#FFF';
         for (i = 0; i < rl; ++i) {
-            r = GLOBALS.arenaRects[i];
+            r = GMSTATE.arenaRects[i];
             ctx.fillRect(r.x, r.y, r.width, r.height);
         }
     }
 
+    // health bars above ships
     function drawHealth () {
         var i, ships, s;
         ships = [Ship1, Ship2];
@@ -262,6 +221,7 @@ var GM = (function () {
         ctx.restore();
     }
 
+    // 'halo' (circle) around ship currently ahead
     function drawLeader () {
         var lead;
         if (Ship1.health > Ship2.health) {
@@ -291,7 +251,7 @@ var GM = (function () {
         // health
         drawHealth();
 
-        if (GLOBALS.isDead) {
+        if (GMSTATE.isDead) {
             ctx.fillText(deadText, 
                          width / 2 - 400, height / 2 - 150);
         }            
@@ -329,12 +289,40 @@ var GM = (function () {
         score2.innerHTML = parseInt(score2.innerHTML) + inc2;
     }
 
-    // initialise ships
-    function startGame() {
+    // initialise ships etc.
+    function setGameStart() {
         inPlay = false;
-        GLOBALS.isDead = false;
+        GMSTATE.isDead = false;
         Ship1.reset([0.05*width, 0.8*height]);
         Ship2.reset([0.9*width, 0.1*height]);
+    }
+
+    // called by main update fn if we are currently in 'dead' state
+    function updateDead (dt) {
+        if (!GMSTATE.isDead) {
+            // first time we know about dead
+            bullets1 = [];
+            bullets2 = [];
+            if (Ship1.dead && Ship2.dead) {
+                deadText = 'DRAW';
+            }
+            else if (Ship1.dead) {
+                deadText = 'P2 WINS';
+            }
+            else if (Ship2.dead) {
+                deadText = 'P1 WINS';
+            }
+            GMSTATE.isDead = true;
+            deadTime = 0;
+            incrementScores(Ship2.dead ? 1: 0, Ship1.dead ? 1: 0);
+            JUKE.jukebox.playSfx('dead');
+        }
+        deadTime += dt;
+
+        // restart the players for next round...
+        if (deadTime > 3) {
+            setGameStart();
+        }
     }
 
     // main update function (called every frame)
@@ -349,32 +337,8 @@ var GM = (function () {
         Ship2.update(dt);
 
         if ((Ship1.dead) || (Ship2.dead)) {
-            if (!GLOBALS.isDead) {
-                // first time through here
-                bullets1 = [];
-                bullets2 = [];
-                if (Ship1.dead && Ship2.dead) {
-                    deadText = 'DRAW';
-                }
-                else if (Ship1.dead) {
-                    deadText = 'P2 WINS';
-                }
-                else if (Ship2.dead) {
-                    deadText = 'P1 WINS';
-                }
-                GLOBALS.isDead = true;
-                GLOBALS.deadTime = 0;
-                incrementScores(Ship2.dead ? 1: 0, Ship1.dead ? 1: 0);
-                JUKE.jukebox.playSfx('dead');
-            }
-            GLOBALS.deadTime += dt;
-
-            // restart the players...
-            if (GLOBALS.deadTime > 3) {
-                startGame();
-            }
+            updateDead();
         }
-
 
         for (i = 0; i < bullets1.length; i++) {
             bullets1[i].update(dt);
@@ -401,6 +365,7 @@ var GM = (function () {
             Ship2.processInput(KEY.pressed);
         }
         else {
+            // wait on keydown event
             var i;
             for (i = 0; i < KEY.events.length; ++i) {
                 if (KEY.events[i].down) {
@@ -414,40 +379,18 @@ var GM = (function () {
 
     // called by window.onload
     function init () {
-
-        var i, akeys;
-
-        // set all pressed to False
-        akeys = KEY.allkeys;
-        for (i = 0; i < akeys.length; ++i) {
-            KEY.pressed[akeys[i]] = false;
-        }
-
-        // handle any user input
-        function inputListener (e) {
-            var kc = e.keyCode;
-            var down = e.type == "keydown" ? true : false;
-            if ((!down) || (down && KEY.pressed[kc] === false)) {
-                KEY.pressed[kc] = down;
-            }
-            // we only need this for restarting the game
-            KEY.events.push({'down': down});
-            e.preventDefault();
-        }
-        
-        window.addEventListener("keydown", inputListener, false);
-        window.addEventListener("keyup", inputListener, false);
+        var x;
 
         // configure canvas
         CN.setCanvasSize();
     
-        // start the game
-        startGame();
+        // set game state to start
+        setGameStart();
 
         // requestAnimationFrame
        (function(){
            var vendors = ['ms', 'moz', 'webkit', 'o'];
-           for(var x = 0; x < vendors.length && !window.requestAnimFrame; ++x) {
+           for(x = 0; x < vendors.length && !window.requestAnimFrame; ++x) {
                window.requestAnimFrame = window[vendors[x]+'RequestAnimationFrame'];
            }
        }());
@@ -484,13 +427,24 @@ var GM = (function () {
             }
             window.requestAnimFrame(keepDrawing);
         }
+    };
+
+    // called via select box on the html page
+    function setAi(aiString) {
+        if (aiString === "AI") {
+            Ship2.isAi = true;
+        }
+        else {
+            Ship2.isAi = false;
+        }
     }
     
     // public API
     return {setSize: setSize,
             init: init,
             addBullet: addBullet,
-            removeBullet: removeBullet
+            removeBullet: removeBullet,
+            setAi: setAi
             }
 
 }());

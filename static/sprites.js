@@ -1,5 +1,5 @@
-// ship.js
-// Ship (sic) and bullet logic.
+// sprites.js
+// Ship (sic) and bullet 'classes' and logic
 
 var SHIP = {
     vmax: 300,  // maximum speed
@@ -26,7 +26,6 @@ SHIP.setDecayTime = function (value) {
 var BULLET = {
     v: 500,
     coolDown: 0.4,
-    tSince: 1000,
     // images for the different bullet types
     img: {},
     // how much damage in points (players start with 100) that a
@@ -63,8 +62,8 @@ function Bullet(num, x, y, angle) {
     this.vy = -Math.cos(this.angle)*BULLET.v;
 
     this.update = function(dt) {
-        var asize = GLOBALS.arenaSize;
-        var rects = GLOBALS.arenaRects;
+        var asize = GMSTATE.arenaSize;
+        var rects = GMSTATE.arenaRects;
         var i, r, rl;
 
         this.x = this.x + this.vx*dt;
@@ -93,6 +92,7 @@ function Bullet(num, x, y, angle) {
 function Ship (pos, shipNum) {
     var img, that;
 
+    // load image
     that = this;
     img = new Image();
     img.src = "images/spaceship" + shipNum + ".png";
@@ -104,9 +104,9 @@ function Ship (pos, shipNum) {
     };
     this.img = img;
 
-    // num should be either 1 (player 1) or 2 (player 2)
+    // num should be either 1 (player 1) or 2 (player 2).  Player 2
+    // will be the AI when/if implemented.
     this.num = shipNum;
-
     if (this.num === 1) {
         this.keys = KEY.player1;
     }
@@ -129,13 +129,21 @@ function Ship (pos, shipNum) {
         this.thruster = false;
         this.fired = false;
         this.alpha = 1;
+        this.isAi = false;
+        this.tSinceFired = 1000;
     }
     
-    // when created, call reset to set initial data
+    // when created, call reset to set initial data.  We should also
+    // call reset at the beginning of each round.
     this.reset(pos);
 
     this.processInput = function(pressed) {
         var a, keys = this.keys;
+
+        // TODO: implement AI
+        if (this.isAi) {
+            return;
+        }
 
         if (this.thruster) {
             a = SHIP.aThrust;
@@ -192,7 +200,6 @@ function Ship (pos, shipNum) {
     };
 
     this.update = function(dt) {
-
         var vmax, asize;
 
         if (this.dead) {
@@ -236,23 +243,26 @@ function Ship (pos, shipNum) {
         }
 
         // create bullet if fired
-        BULLET.tSince += dt;
+        this.tSinceFired += dt;
         if (this.fired) {
-            if (BULLET.tSince > BULLET.coolDown) {
+            if (this.tSinceFired > BULLET.coolDown) {
                 // play soundeffect
                 JUKE.jukebox.playSfx('laser' + this.num);
-                GM.addBullet(this.num, new Bullet(this.num, this.x + this.hwidth, 
-                                        this.y + this.hheight, this.angle));
-                BULLET.tSince = 0;
+                GM.addBullet(this.num, new Bullet(this.num,
+                                                  this.x + this.hwidth,
+                                                  this.y + this.hheight,
+                                                  this.angle));
+                this.tSinceFired = 0;
             }
         }
 
         // check for collision with arena walls: we make the velocity
         // in the direction of the wall zero, since otherwise we
         // 'stick' to the wall.  An alternative is reversing the
-        // velocity (this.vx = -this.vx, etc.), but it seems like this
-        // would change the game quite a lot.
-        asize = GLOBALS.arenaSize;
+        // velocity (this.vx = -this.vx, etc.), but it seems like
+        // adding this 'bouncing' behaviour would change the game
+        // quite a lot.
+        asize = GMSTATE.arenaSize;
         if (this.x < asize.xmin) {
             this.x = asize.xmin;
             this.vx = 0;
@@ -270,10 +280,10 @@ function Ship (pos, shipNum) {
             this.vy = 0;
         }
 
-        // check if we have hit one of the obstacles in the arena
-        // (again ignore bullet size).
-        var asize = GLOBALS.arenaSize;
-        var rects = GLOBALS.arenaRects;
+        // check if we have hit one of the obstacles in the arena. 
+        // TODO: clean this up a bit.
+        var asize = GMSTATE.arenaSize;
+        var rects = GMSTATE.arenaRects;
         var i, r, rl, offx, offy, side;
         rl = rects.length;
         for (i = 0; i < rl; ++i) {
@@ -308,18 +318,16 @@ function Ship (pos, shipNum) {
                         offy = r.y + r.height - this.y;
                     }
                 }
-
                 this.x = this.x + offx;
                 this.y = this.y + offy;
-
             }
         }
 
         // reduce health
-        if (!GLOBALS.isDead) {
+        if (!GMSTATE.isDead) {
 
             this.health = this.health - SHIP.decaySpeed*dt;
-            // 5 seconds left
+            // 5 seconds left (assuming we don't get hit)
             if (this.health < 5*SHIP.decaySpeed) {
                 JUKE.jukebox.playSfx('alarm');
                 this.flasht += dt;

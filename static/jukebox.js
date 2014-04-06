@@ -1,4 +1,9 @@
-var JUKE = {};
+// jukebox.js
+// a jukebox 'class' for managing music and sfx
+
+var JUKE = {musicVol: 0.4,
+            sfxVol: 0.8
+           };
 
 JUKE.Jukebox = function () {
     var test = new Audio();
@@ -32,11 +37,11 @@ JUKE.Jukebox = function () {
     }
 
     this.loadMusic = function (musicMap) {
-        loadAudio(musicMap, this.music, true, 0.25);
+        loadAudio(musicMap, this.music, true, JUKE.musicVol);
     };
 
     this.loadSfx = function (sfxMap) {
-        loadAudio(sfxMap, this.sfx, false, 0.7);
+        loadAudio(sfxMap, this.sfx, false, JUKE.sfxVol);
     };
 
     this.playMusic = function (name) {

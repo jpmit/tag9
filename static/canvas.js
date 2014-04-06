@@ -1,5 +1,5 @@
 // canvas.js
-// Canvas handling
+// Handle canvas resizing.
 
 var CN = {};
 
@@ -12,6 +12,4 @@ CN.setCanvasSize = function () {
     }
 };
 
-CN.init = function () { 
-    window.onresize = CN.setCanvasSize;
-}
+window.onresize = CN.setCanvasSize;

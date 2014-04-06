@@ -43,17 +43,18 @@
     <div id="container">
 	   <canvas id="game"></canvas>
     </div>
+    <!-- TODO: fix loading order / initialisation -->
     <script src="util.js"></script>
     <script src="jukebox.js"></script>
     <script src="collide.js"></script>
-    <script src="ship.js"></script>
-    <script src="game.js"></script>
+    <script src="sprites.js"></script>
+    <script src="key.js"></script>
     <script src="canvas.js"></script>
+    <script src="game.js"></script>
     <script src="page.js"></script>
     <script>
       window.onload = function() {
       GM.init();
-      CN.init();
       };
     </script>
   </body>
