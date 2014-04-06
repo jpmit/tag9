@@ -259,7 +259,7 @@ var GM = (function () {
 
         if (!inPlay) {
             ctx.fillText("Press any key to start", 
-                         width / 2 - 350, height / 2 - 50);
+                         width / 2 - 330, height / 2 - 50);
         }
 
         // obstacles inside the arena
@@ -308,10 +308,10 @@ var GM = (function () {
                 deadText = 'DRAW';
             }
             else if (Ship1.dead) {
-                deadText = 'P2 WINS';
+                deadText = '2P WINS';
             }
             else if (Ship2.dead) {
-                deadText = 'P1 WINS';
+                deadText = '1P WINS';
             }
             GMSTATE.isDead = true;
             deadTime = 0;

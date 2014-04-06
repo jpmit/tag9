@@ -39,9 +39,10 @@ button {
     left: 50px;
     down: 100px;
     width: 200px;
-    height: 200px;
+    height: 350px;
     background: black;
     display: none;
+    font-size: 0.9em;
 }
 
 #sbutton {
