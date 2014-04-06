@@ -38,5 +38,19 @@
         document.getElementById("p1score").innerHTML = 0;
         document.getElementById("p2score").innerHTML = 0;
     }
-}());
 
+    var instruct = document.getElementById("instructions");
+    var itxt = document.getElementById("instructiontxt");
+    instruct.onclick = function () {
+        var shown = (itxt.style.display === 'block');
+        if (shown) {
+            itxt.style.display = 'none';
+//            instruct.innerHTML = 'Instructions';
+        }
+        else {
+            itxt.style.display = 'block';
+//            instruct.innerHTML = 'Instructions';
+        }
+    }
+        
+}());

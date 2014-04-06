@@ -40,7 +40,6 @@ KEY.allkeys = (function () {
     var parray = [KEY.player1, KEY.player2]
     for (i = 0; i != parray.length; ++i) {
         pl = parray[i];
-        console.log(pl);
         for (k in pl) {
             if (pl.hasOwnProperty(k)) {
                 allkeys.push(pl[k]);
@@ -49,7 +48,6 @@ KEY.allkeys = (function () {
     }
     return allkeys;
 }());
-console.log(KEY.allkeys);
 
 var GLOBALS = {
     arenaSize: {xmin: Number.MIN_VALUE,
@@ -82,6 +80,7 @@ var GM = (function () {
     var bullets1 = [];
     var bullets2 = [];
     var inPlay;
+    var deadText;
 
     // the three starfields that make up the background
     var stars1, stars2, stars3;
@@ -182,6 +181,9 @@ var GM = (function () {
         ctx.fillStyle = '#FFF';
         ctx.strokeStyle = '#FFF';
         ctx.font = "20px Monospace";
+
+        // call start game (will reset ship positions)
+        startGame();
     }
 
     function drawSprite (sprite) { 
@@ -189,7 +191,6 @@ var GM = (function () {
 	     ctx.translate(sprite.x + sprite.hwidth, sprite.y + sprite.hheight);
 	     ctx.rotate(sprite.angle);
         if (sprite.alpha) {
-            console.log(sprite.alpha);
             ctx.globalAlpha = sprite.alpha;
         }
 	     ctx.drawImage(sprite.img, -sprite.hwidth, -sprite.hheight);
@@ -226,7 +227,7 @@ var GM = (function () {
     function drawArenaRects () {
         var i, rl, r;
         rl = GLOBALS.arenaRects.length;
-
+        ctx.fillStyle = '#FFF';
         for (i = 0; i < rl; ++i) {
             r = GLOBALS.arenaRects[i];
             ctx.fillRect(r.x, r.y, r.width, r.height);
@@ -234,8 +235,29 @@ var GM = (function () {
     }
 
     function drawHealth () {
-        ctx.fillText(Math.floor(Ship1.health), 100, 50);
-        ctx.fillText(Math.floor(Ship2.health), 400, 50);
+        var i, ships, s;
+        ships = [Ship1, Ship2];
+        
+        ctx.save();
+        for (var i = 0; i != ships.length; ++i) {
+            s = ships[i];
+            if (!s.dead) {
+                // white rectangle
+                ctx.fillStyle = '#FFF';
+                ctx.fillRect(s.x, s.y - 15, 40, 5);
+                if (s.health < 30) {
+                    ctx.fillStyle = '#FF0000';
+                }
+                else if (s.health < 60) {
+                    ctx.fillStyle = '#FF6C00';
+                }
+                else {
+                    ctx.fillStyle = '#00FF00';
+                }
+                ctx.fillRect(s.x, s.y - 15, Math.floor(0.4*Ship1.health), 5);
+            }
+        }
+        ctx.restore();
     }
 
     function drawLeader () {
@@ -267,9 +289,14 @@ var GM = (function () {
         // health
         drawHealth();
 
+        if (GLOBALS.isDead) {
+            ctx.fillText(deadText, 
+                         width / 2 - 400, height / 2 - 150);
+        }            
+
         if (!inPlay) {
             ctx.fillText("Press any key to start", 
-                         width / 2 - 400, height / 2 - 50);
+                         width / 2 - 350, height / 2 - 50);
         }
 
         // obstacles inside the arena
@@ -303,6 +330,7 @@ var GM = (function () {
     // initialise ships
     function startGame() {
         inPlay = false;
+        GLOBALS.isDead = false;
         Ship1 = new Ship([0.05*width, 0.8*height], 1);
         Ship2 = new Ship([0.9*width, 0.1*height], 2);
         bullets1 = [];
@@ -320,6 +348,32 @@ var GM = (function () {
         Ship1.update(dt);
         Ship2.update(dt);
 
+        if ((Ship1.dead) || (Ship2.dead)) {
+            if (!GLOBALS.isDead) {
+                // first time through here
+                if (Ship1.dead && Ship2.dead) {
+                    deadText = 'DRAW';
+                }
+                else if (Ship1.dead) {
+                    deadText = 'P2 WINS';
+                }
+                else if (Ship2.dead) {
+                    deadText = 'P1 WINS';
+                }
+                GLOBALS.isDead = true;
+                GLOBALS.deadTime = 0;
+                incrementScores(Ship2.dead ? 1: 0, Ship1.dead ? 1: 0);
+                JUKE.jukebox.playSfx('dead');
+            }
+            GLOBALS.deadTime += dt;
+
+            // restart the players...
+            if (GLOBALS.deadTime > 3) {
+                startGame();
+            }
+        }
+
+
         for (i = 0; i < bullets1.length; i++) {
             bullets1[i].update(dt);
         }
@@ -335,13 +389,6 @@ var GM = (function () {
         stars1.update(dt);
         stars2.update(dt);
         stars3.update(dt);
-
-        if ((Ship1.dead) || (Ship2.dead)) {
-            JUKE.jukebox.playSfx('dead');
-            incrementScores(Ship2.dead ? 1: 0, Ship1.dead ? 1: 0);
-            // restart the players...
-            startGame();
-        }
     }
 
     // process user input (called every frame)
@@ -415,7 +462,6 @@ var GM = (function () {
         else {
             mainDraw = function () {};
         }
-        console.log(mainDraw);
 
         // logic only (and draw if requestAnimationFrame not supported)
         function main() {

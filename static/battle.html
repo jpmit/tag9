@@ -10,6 +10,7 @@
   <body>
     <div id="topbar">
       <h1>Space Battle!</h1>
+      <button id="instructions" type="button">Instructions</button>
       <h2>Sound</h2>
       <button id="sbutton" type="button" value="on">on</button>
       <select id="gametype">
@@ -28,7 +29,16 @@
       <span id="player2id">2P</span>
       <span id="p2score">0</span>
       <button id="zeroscore" type="button">reset score</button>
-      <button id="instructions" type="button">Instructions</button>
+    </div>
+
+    <div id="instructiontxt">
+      P1 (bottom left)<br>
+      arrow keys to move<br>
+      shift to shoot<br><br>
+      P2 (top right)<br>
+      wasd keys to move<br>
+      q to shoot<br><br>
+      A halo will appear around your ship if you are ahead
     </div>
     <div id="container">
 	   <canvas id="game"></canvas>

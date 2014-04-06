@@ -17,7 +17,6 @@ var SHIP = {
 };
 
 SHIP.setDecayTime = function (value) {
-    console.log(value);
     // decay time is time it takes (in seconds) to reach zero health
     // if not hit at all: we start with 100 points of health, so
     // decaySpeed = 100 / decayTime.
@@ -43,7 +42,6 @@ var BULLET = {
         BULLET.img[bulletNum] = img;
         BULLET.width = img.width;
         BULLET.height = img.height;
-        // store half the width of the bullet and half the length
         BULLET.hwidth = BULLET.width/2;
         BULLET.hheight = BULLET.height/2;
     }
@@ -195,6 +193,11 @@ function Ship (pos, shipNum) {
 
         var vmax, asize;
 
+        if (this.dead) {
+            this.alpha = 0.01;
+            return;
+        }
+        
         this.vx = this.vx + this.ax*dt - SHIP.gamma*this.vx*dt;
         this.vy = this.vy + this.ay*dt - SHIP.gamma*this.vy*dt;
 
@@ -311,24 +314,31 @@ function Ship (pos, shipNum) {
         }
 
         // reduce health
-        this.health = this.health - SHIP.decaySpeed*dt;
+        if (!GLOBALS.isDead) {
 
-        var tleft = this.health / SHIP.decaySpeed;
-        if (tleft < 5) {
-            JUKE.jukebox.playSfx('alarm');
-            this.flashing = true;
-            this.flasht += dt;
-            this.flasht = this.flasht % 0.2;
-            if (this.flasht < 0.1) {
-                this.alpha = 0.1;
+            this.health = this.health - SHIP.decaySpeed*dt;
+            // 5 seconds left
+            if (this.health < 5*SHIP.decaySpeed) {
+                JUKE.jukebox.playSfx('alarm');
+                this.flashing = true;
+                this.flasht += dt;
+                this.flasht = this.flasht % 0.2;
+                if (this.flasht < 0.1) {
+                    this.alpha = 0.1;
+                }
+                else {
+                    this.alpha = 1;
+                }
+
+                if (this.health < 0.5) {
+                    this.dead = true
+                }
+
             }
-            else {
-                this.alpha = 1;
-            }
+
         }
-
-        if (this.health < 0.5) {
-            this.dead = true
+        else {
+            this.alpha = 1;
         }
     };
 };

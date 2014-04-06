@@ -18,6 +18,10 @@ h1, h2 {
     display: inline-block;
 }
 
+h2 {
+    font-size: 1.2em;
+}
+
 .scoretxt {
     color: white;
     font-size: 1.2em;
@@ -28,6 +32,16 @@ button {
     margin-top: 10px;
     font-family: monospace;
     background: #FFFFFF;
+}
+
+#instructiontxt {
+    position: absolute;
+    left: 50px;
+    down: 100px;
+    width: 200px;
+    height: 200px;
+    background: black;
+    display: none;
 }
 
 #sbutton {
