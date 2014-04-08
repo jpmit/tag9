@@ -17,7 +17,9 @@ var GMSTATE = {
     // bullets can pass through these.
     arenaRects : [],
     // is at least one of the players currently dead?
-    isDead: false
+    isDead: false,
+    // total game time elapsed in s
+    gameTime: 0
 };
 
 // main game module ('module design pattern')
@@ -403,9 +405,11 @@ var GM = (function () {
         // logic only (and draw if requestAnimationFrame not supported)
         function main() {
             var now = Date.now(),
-                dt = now - then;
+                // time elapsed since last tick in s
+                dt = (now - then) / 1000;
+            GMSTATE += dt;
             processInput();
-            update(dt / 1000);
+            update(dt);
             mainDraw();
             then = now;
         }

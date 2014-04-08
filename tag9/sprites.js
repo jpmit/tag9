@@ -341,4 +341,3 @@ function Ship(pos, shipNum) {
         }
     };
 }
-
