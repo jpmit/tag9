@@ -2,6 +2,14 @@
 // Copyright (c) James Mithen 2014.
 // Ship (sic) and bullet 'classes' and logic
 
+'use strict';
+
+/*jslint todo: true*/
+/*global GM*/
+/*global GMSTATE*/
+/*global JUKE*/
+/*global KEY*/
+
 var SHIP = {
     vmax: 300,  // maximum speed
     // if true, 'thruster' is always on
@@ -21,8 +29,8 @@ SHIP.setDecayTime = function (value) {
     // decay time is time it takes (in seconds) to reach zero health
     // if not hit at all: we start with 100 points of health, so
     // decaySpeed = 100 / decayTime.
-    SHIP.decaySpeed = 100 / parseInt(value);
-}
+    SHIP.decaySpeed = 100 / parseInt(value, 10);
+};
 
 var BULLET = {
     v: 500,
@@ -36,14 +44,15 @@ var BULLET = {
 
 // load bullet images
 (function () {
-    var img1 = new Image();
-    var img2 = new Image();
+    /*global Image*/
+    var img1 = new Image(),
+        img2 = new Image();
     function onloadBullet(img, bulletNum) {
         BULLET.img[bulletNum] = img;
         BULLET.width = img.width;
         BULLET.height = img.height;
-        BULLET.hwidth = BULLET.width/2;
-        BULLET.hheight = BULLET.height/2;
+        BULLET.hwidth = BULLET.width / 2;
+        BULLET.hheight = BULLET.height / 2;
     }
     img1.onload = onloadBullet(img1, 1);
     img2.onload = onloadBullet(img2, 2);
@@ -59,38 +68,40 @@ function Bullet(num, x, y, angle) {
     this.hwidth = BULLET.hwidth;
     this.hheight = BULLET.hwidth;
 
-    this.vx = Math.sin(this.angle)*BULLET.v;
-    this.vy = -Math.cos(this.angle)*BULLET.v;
+    this.vx = Math.sin(this.angle) * BULLET.v;
+    this.vy = -Math.cos(this.angle) * BULLET.v;
 
-    this.update = function(dt) {
-        var asize = GMSTATE.arenaSize;
-        var rects = GMSTATE.arenaRects;
-        var i, r, rl;
+    this.update = function (dt) {
+        var asize = GMSTATE.arenaSize,
+            rects = GMSTATE.arenaRects,
+            i,
+            r,
+            rl;
 
-        this.x = this.x + this.vx*dt;
-        this.y = this.y + this.vy*dt;
+        this.x = this.x + this.vx * dt;
+        this.y = this.y + this.vy * dt;
 
         // check if the bullet is outside the arena.  We ignore the
         // (negligible) size of the bullets here.
-        if (this.x < asize.xmin || this.x > asize.xmax 
-            || this.y < asize.ymin || this.y > asize.ymax) {
+        if (this.x < asize.xmin || this.x > asize.xmax
+                || this.y < asize.ymin || this.y > asize.ymax) {
             GM.removeBullet(num, this);
         }
 
         // check if bullet has hit one of the obstacles in the arena
         // (again ignore bullet size).
         rl = rects.length;
-        for (i = 0; i < rl; ++i) {
+        for (i = 0; i < rl; i += 1) {
             r = rects[i];
             if (this.x > r.x && this.x < r.x + r.width &&
-                this.y > r.y && this.y < r.y + r.height) {
+                    this.y > r.y && this.y < r.y + r.height) {
                 GM.removeBullet(num, this);
             }
         }
-    }
+    };
 }
 
-function Ship (pos, shipNum) {
+function Ship(pos, shipNum) {
     var img, that;
 
     // load image
@@ -100,8 +111,8 @@ function Ship (pos, shipNum) {
     img.onload = function () {
         that.width = img.width;
         that.height = img.height;
-        that.hwidth = img.width/2;
-        that.hheight = img.height/2;
+        that.hwidth = img.width / 2;
+        that.hheight = img.height / 2;
     };
     this.img = img;
 
@@ -110,8 +121,7 @@ function Ship (pos, shipNum) {
     this.num = shipNum;
     if (this.num === 1) {
         this.keys = KEY.player1;
-    }
-    else if (this.num === 2) {
+    } else if (this.num === 2) {
         this.keys = KEY.player2;
     }
 
@@ -132,13 +142,13 @@ function Ship (pos, shipNum) {
         this.alpha = 1;
         this.isAi = false;
         this.tSinceFired = 1000;
-    }
-    
+    };
+
     // when created, call reset to set initial data.  We should also
     // call reset at the beginning of each round.
     this.reset(pos);
 
-    this.processInput = function(pressed) {
+    this.processInput = function (pressed) {
         var a, keys = this.keys;
 
         // TODO: implement AI
@@ -148,21 +158,18 @@ function Ship (pos, shipNum) {
 
         if (this.thruster) {
             a = SHIP.aThrust;
-        }
-        else {
+        } else {
             a = SHIP.a;
         }
 
         // accelaration
         if (pressed[keys.UP]) {
-            this.ay = -Math.cos(this.angle)*a;
-            this.ax = Math.sin(this.angle)*a;
-        }
-        else if (pressed[keys.DOWN]) {
-            this.ay = Math.cos(this.angle)*a;
-            this.ax = -Math.sin(this.angle)*a;
-        }
-        else {
+            this.ay = -Math.cos(this.angle) * a;
+            this.ax = Math.sin(this.angle) * a;
+        } else if (pressed[keys.DOWN]) {
+            this.ay = Math.cos(this.angle) * a;
+            this.ax = -Math.sin(this.angle) * a;
+        } else {
             this.ay = 0;
             this.ax = 0;
         }
@@ -170,23 +177,19 @@ function Ship (pos, shipNum) {
         // rotation
         if (pressed[keys.LEFT]) {
             this.rot = SHIP.leftRotate;
-        }
-        else if (pressed[keys.RIGHT]) {
+        } else if (pressed[keys.RIGHT]) {
             this.rot = SHIP.rightRotate;
-        }
-        else {
+        } else {
             this.rot = SHIP.noRotate;
         }
 
         // thrusting
         if (SHIP.permanentThrust) {
             this.thruster = true;
-        }
-        else {
+        } else {
             if (pressed[keys.THRUST]) {
                 this.thruster = true;
-            }
-            else {
+            } else {
                 this.thruster = false;
             }
         }
@@ -194,53 +197,51 @@ function Ship (pos, shipNum) {
         // shooting
         if (pressed[keys.FIRE]) {
             this.fired = true;
-        }
-        else {
+        } else {
             this.fired = false;
         }
     };
 
-    this.update = function(dt) {
-        var vmax, asize;
+    this.update = function (dt) {
+        var vmax, asize = GMSTATE.arenaSize,
+            rects = GMSTATE.arenaRects,
+            rl = rects.length,
+            i, r, offx, offy, side;
 
         if (this.dead) {
             this.alpha = 0.01;
             return;
         }
-        
-        this.vx = this.vx + this.ax*dt - SHIP.gamma*this.vx*dt;
-        this.vy = this.vy + this.ay*dt - SHIP.gamma*this.vy*dt;
+
+        this.vx = this.vx + this.ax * dt - SHIP.gamma * this.vx * dt;
+        this.vy = this.vy + this.ay * dt - SHIP.gamma * this.vy * dt;
 
         if (this.thruster) {
             vmax = SHIP.vmax;
-        }
-        else {
+        } else {
             vmax = SHIP.vmax;
         }
 
         // cap the speed
         if (this.vx > vmax) {
             this.vx = vmax;
-        }
-        else if (this.vx < -vmax) {
+        } else if (this.vx < -vmax) {
             this.vx = -vmax;
         }
         if (this.vy > vmax) {
             this.vy = vmax;
-        }
-        else if (this.vy < -vmax) {
+        } else if (this.vy < -vmax) {
             this.vy = -vmax;
         }
 
-        this.x = this.x + this.vx*dt;
-        this.y = this.y + this.vy*dt;
+        this.x = this.x + this.vx * dt;
+        this.y = this.y + this.vy * dt;
 
         // update angle
         if (this.rot === SHIP.leftRotate) {
-            this.angle = this.angle - dt*SHIP.rotv;
-            }
-        else if (this.rot === SHIP.rightRotate) {
-            this.angle = this.angle + dt*SHIP.rotv;
+            this.angle = this.angle - dt * SHIP.rotv;
+        } else if (this.rot === SHIP.rightRotate) {
+            this.angle = this.angle + dt * SHIP.rotv;
         }
 
         // create bullet if fired
@@ -263,37 +264,30 @@ function Ship (pos, shipNum) {
         // velocity (this.vx = -this.vx, etc.), but it seems like
         // adding this 'bouncing' behaviour would change the game
         // quite a lot.
-        asize = GMSTATE.arenaSize;
         if (this.x < asize.xmin) {
             this.x = asize.xmin;
             this.vx = 0;
-        }
-        else if (this.x > asize.xmax - this.width) {
+        } else if (this.x > asize.xmax - this.width) {
             this.x = asize.xmax - this.width;
             this.vx = 0;
         }
         if (this.y < asize.ymin) {
             this.y = asize.ymin;
             this.vy = 0;
-        }
-        else if (this.y > asize.ymax - this.height) {
+        } else if (this.y > asize.ymax - this.height) {
             this.y = asize.ymax - this.height;
             this.vy = 0;
         }
 
         // check if we have hit one of the obstacles in the arena. 
         // TODO: clean this up a bit.
-        var asize = GMSTATE.arenaSize;
-        var rects = GMSTATE.arenaRects;
-        var i, r, rl, offx, offy, side;
-        rl = rects.length;
-        for (i = 0; i < rl; ++i) {
+        for (i = 0; i < rl; i += 1) {
             r = rects[i];
             if (this.x + this.width > r.x && this.x < r.x + r.width &&
-                this.y + this.height > r.y && this.y < r.y + r.height) {
+                    this.y + this.height > r.y && this.y < r.y + r.height) {
 
                 // did we hit it from the side (left or right direction)?
-                side = (this.y + this.hheight > r.y && this.y + this.hheight < r.y + r.height)
+                side = (this.y + this.hheight > r.y && this.y + this.hheight < r.y + r.height);
 
                 if (side) {
                     offy = 0;
@@ -301,20 +295,17 @@ function Ship (pos, shipNum) {
                     if (this.x > r.x) {
                         // hit from the right
                         offx = (r.x + r.width) - this.x;
-                    }
-                    else {
+                    } else {
                         // hit from the left
-                        offx = - (this.x + this.width - r.x);
+                        offx = -(this.x + this.width - r.x);
                     }
-                }
-                else {
+                } else {
                     offx = 0;
                     this.vy = 0;
                     if (this.y < r.y) {
                         // hit from top
                         offy = r.y - (this.y + this.height);
-                    }
-                    else {
+                    } else {
                         // hit from bottom
                         offy = r.y + r.height - this.y;
                     }
@@ -327,28 +318,27 @@ function Ship (pos, shipNum) {
         // reduce health
         if (!GMSTATE.isDead) {
 
-            this.health = this.health - SHIP.decaySpeed*dt;
+            this.health = this.health - SHIP.decaySpeed * dt;
             // 5 seconds left (assuming we don't get hit)
-            if (this.health < 5*SHIP.decaySpeed) {
+            if (this.health < 5 * SHIP.decaySpeed) {
                 JUKE.jukebox.playSfx('alarm');
                 this.flasht += dt;
                 this.flasht = this.flasht % 0.2;
                 if (this.flasht < 0.1) {
                     this.alpha = 0.1;
-                }
-                else {
+                } else {
                     this.alpha = 1;
                 }
 
                 if (this.health < 0.5) {
-                    this.dead = true
+                    this.dead = true;
                 }
 
             }
 
-        }
-        else {
+        } else {
             this.alpha = 1;
         }
     };
-};
+}
+

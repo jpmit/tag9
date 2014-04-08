@@ -2,6 +2,8 @@
 // Copyright (c) James Mithen 2014.
 // Keyboard stuff
 
+'use strict';
+
 // track pressed keys
 var KEY = {
     // map actions to javascript key codes
@@ -28,7 +30,7 @@ var KEY = {
         FIRE: 81
     },
     // pressed stores keycode as key, boolean as value
-	 pressed: {},
+    pressed: {},
     // array storing all used key codes
     allkeys: [],
     // store events (clear this every frame)
@@ -36,9 +38,10 @@ var KEY = {
 };
 
 KEY.allkeys = (function () {
-    var pl, k, i, allkeys = [];
-    var parray = [KEY.player1, KEY.player2]
-    for (i = 0; i != parray.length; ++i) {
+    var pl, k, i, allkeys, parray;
+    allkeys = [];
+    parray = [KEY.player1, KEY.player2];
+    for (i = 0; i !== parray.length; i += 1) {
         pl = parray[i];
         for (k in pl) {
             if (pl.hasOwnProperty(k)) {
@@ -51,16 +54,19 @@ KEY.allkeys = (function () {
 
 // initialisation
 (function () {
+    /*jslint browser:true */
+    var i,
+        akeys = KEY.allkeys;
     // set all pressed to False
-    akeys = KEY.allkeys;
-    for (i = 0; i < akeys.length; ++i) {
+    for (i = 0; i < akeys.length; i += 1) {
         KEY.pressed[akeys[i]] = false;
     }
-    
+
     // handle any user input
-    function inputListener (e) {
-        var kc = e.keyCode;
-        var down = e.type == "keydown" ? true : false;
+    function inputListener(e) {
+        var kc, down;
+        kc = e.keyCode;
+        down = e.type === "keydown" ? true : false;
         if ((!down) || (down && KEY.pressed[kc] === false)) {
             KEY.pressed[kc] = down;
         }
@@ -70,7 +76,7 @@ KEY.allkeys = (function () {
         KEY.events.push({'down': down});
         e.preventDefault();
     }
-    
+
     window.addEventListener("keydown", inputListener, false);
     window.addEventListener("keyup", inputListener, false);
 }());

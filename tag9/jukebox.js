@@ -2,16 +2,19 @@
 // Copyright (c) James Mithen 2014.
 // a jukebox 'class' for managing music and sfx
 
+'use strict';
+
 var JUKE = {musicVol: 0.4,
             sfxVol: 0.8
            };
 
 JUKE.Jukebox = function () {
-    var test = new Audio();
-    var ext;
-    var playingMusic = false;
-    var playingName = "";
-    var muted = false;
+    /*global Audio*/
+    var test = new Audio(),
+        ext,
+        playingMusic = false,
+        playingName = "",
+        muted = false;
 
     this.music = {};
     this.sfx = {};
@@ -20,12 +23,12 @@ JUKE.Jukebox = function () {
     // there doesn't seem to be a better alternative.
     if (test.canPlayType("audio/ogg") !== "") {
         ext = "ogg";
-    }
-    else if (test.canPlayType("audio/mp3") !== "") {
+    } else if (test.canPlayType("audio/mp3") !== "") {
         ext = "mp3";
     }
 
-    function loadAudio (nameMap, store, loop, volume) {
+    function loadAudio(nameMap, store, loop, volume) {
+        var k, m;
         for (k in nameMap) {
             if (nameMap.hasOwnProperty(k)) {
                 m = new Audio(nameMap[k] + "." + ext);
@@ -60,7 +63,7 @@ JUKE.Jukebox = function () {
             // just in case
             playingName = "";
         }
-    }
+    };
 
     this.playSfx = function (name) {
         if (!muted) {
@@ -70,14 +73,14 @@ JUKE.Jukebox = function () {
 
     this.mute = function () {
         muted = true;
-        this.stopMusic()
+        this.stopMusic();
     };
 
     this.unmute = function () {
         muted = false;
         this.playMusic('main');
     };
-}
+};
 
 // create jukebox for in game audio
 JUKE.jukebox = new JUKE.Jukebox();

@@ -2,7 +2,9 @@
 // Copyright (c) James Mithen 2014.
 // The main game logic.
 
-var canvas = document.getElementById("game");
+'use strict';
+
+/*jslint browser:true */
 
 // global game state that can be accessed by one and all
 var GMSTATE = {
@@ -20,46 +22,45 @@ var GMSTATE = {
 
 // main game module ('module design pattern')
 var GM = (function () {
+    /*global Ship*/
+    /*global JUKE*/
+    /*global COLL*/
+    /*global KEY*/
+    /*global CN*/
 
     // frames per second for the logic (and the rendering if
     // RequestAnimationFrame is not supported)
-	 var FPS =  40;
-    var WALLWIDTH = 5; // in pixels
-    GMSTATE.arenaSize.xmin = WALLWIDTH;
-    GMSTATE.arenaSize.ymin = WALLWIDTH;
+    var fps =  40,
+        wallwidth = 5, // in pixels
+        ctx, // the context for drawing to
+        then = Date.now(),
+        width,
+        height,
+        Ship1 = new Ship([-100, -100], 1),
+        Ship2 = new Ship([-100, -100], 2),
+        bullets1 = [],
+        bullets2 = [],
+        inPlay,
+        deadText,
+        deadTime,
+        // the three starfields that make up the background
+        stars1,
+        stars2,
+        stars3;
 
-    // times used in main loop
-    var then = Date.now();
-    var now;
-
-    var ctx = canvas.getContext('2d');
-    var width = canvas.width;
-    var height = canvas.height;
-
-    var Ship1 = new Ship([0.05*width, 0.8*height], 1);
-    var Ship2 = new Ship([0.9*width, 0.1*height], 2);
-
-    var bullets1 = [];
-    var bullets2 = [];
-
-    // are we currently playing (not waiting for death animation)?
-    var inPlay;
-    var deadText;
-    var deadTime;
-
-    // the three starfields that make up the background
-    var stars1, stars2, stars3;
+    GMSTATE.arenaSize.xmin = wallwidth;
+    GMSTATE.arenaSize.ymin = wallwidth;
 
     // thinly adapted from 'Professional HTML5 Mobile Game
     // Development' by Pascal Rettig.
-    function Starfield (speed, opacity, starsPerArea, clear, color) {
-        var stars = document.createElement("canvas");
-        var numStars = Math.round(width*height*starsPerArea);
+    function Starfield(speed, opacity, starsPerArea, clear, color) {
+        var stars = document.createElement("canvas"),
+            starCtx = stars.getContext("2d"),
+            numStars = Math.round(width * height * starsPerArea),
+            offset = 0,
+            i;
         stars.width = width;
         stars.height = height;
-
-        var starCtx = stars.getContext("2d");
-        var offset = 0;
 
         if (clear) {
             starCtx.fillstyle = "#000";
@@ -67,15 +68,15 @@ var GM = (function () {
         }
         starCtx.fillStyle = color;
         starCtx.globalAlpha = opacity;
-        for (var i = 0; i < numStars; ++i) {
-            starCtx.fillRect(Math.floor(Math.random()*stars.width),
-                             Math.floor(Math.random()*stars.height),
+        for (i = 0; i < numStars; i += 1) {
+            starCtx.fillRect(Math.floor(Math.random() * stars.width),
+                             Math.floor(Math.random() * stars.height),
                              2, 2);
         }
 
         this.draw = function () {
-            var intOffset = Math.floor(offset);
-            var remaining = stars.width - intOffset;
+            var intOffset = Math.floor(offset),
+                remaining = stars.width - intOffset;
             if (intOffset > 0) {
                 ctx.drawImage(stars, remaining, 0, intOffset,
                               stars.height, 0, 0, intOffset, stars.height);
@@ -84,15 +85,15 @@ var GM = (function () {
                 ctx.drawImage(stars, 0, 0, remaining, stars.height,
                               intOffset, 0, remaining, stars.height);
             }
-        }
+        };
 
         this.update = function (dt) {
             offset += dt * speed;
             offset = offset % stars.width;
-        }
+        };
     }
-    
-    function Rect (x, y, width, height) {
+
+    function Rect(x, y, width, height) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -102,25 +103,23 @@ var GM = (function () {
     // create obstacles in the arena: note these are scaled in the
     // long direction only, but fixed in the short direction.  This
     // ensures no problems with the collision physics (hopefully).
-    function createArenaRects () {
-        var arenaRects = [];
+    function createArenaRects() {
+        var arenaRects = [],
+            // player 1 pen (bottom right)
+            r11 = new Rect(Math.floor(0.05 * width), Math.floor(0.7 * height),
+                           Math.floor(0.1 * width), 20),
+            r12 = new Rect(Math.floor(0.05 * width) + Math.floor(0.1 * width) - 20,
+                           Math.floor(0.7 * height),
+                           20, Math.floor(0.2 * height)),
 
-        // player 1 pen (bottom right)
-        var r11 = new Rect(Math.floor(0.05*width), Math.floor(0.7*height), 
-                           Math.floor(0.1*width), 20);
-        var r12 = new Rect(Math.floor(0.05*width) + Math.floor(0.1*width) - 20, 
-                           Math.floor(0.7*height), 
-                           20, Math.floor(0.2*height));
-
-        // player 2 pen (top right)
-        var r21 = new Rect(Math.floor(0.85*width), 
-                           Math.floor(0.3*height) - 20, Math.floor(0.1*width), 20);
-        var r22 = new Rect(Math.floor(0.85*width), Math.floor(0.1*height), 20, 
-                           Math.floor(0.2*height));
-
-        // central objects
-        var rc = new Rect(Math.floor(0.5*width) - 10, Math.floor(0.3*height), 20, 
-                          Math.floor(0.4*height));
+            // player 2 pen (top right)
+            r21 = new Rect(Math.floor(0.85 * width),
+                           Math.floor(0.3 * height) - 20, Math.floor(0.1 * width), 20),
+            r22 = new Rect(Math.floor(0.85 * width), Math.floor(0.1 * height), 20,
+                           Math.floor(0.2 * height)),
+            // central objects
+            rc = new Rect(Math.floor(0.5 * width) - 10, Math.floor(0.3 * height), 20,
+                          Math.floor(0.4 * height));
 
         arenaRects.push(r11);
         arenaRects.push(r12);
@@ -130,14 +129,24 @@ var GM = (function () {
         GMSTATE.arenaRects = arenaRects;
     }
 
+    // initialise ships etc.
+    function setGameStart() {
+        inPlay = false;
+        GMSTATE.isDead = false;
+        Ship1.reset([0.05 * width, 0.8 * height]);
+        Ship2.reset([0.9 * width, 0.1 * height]);
+    }
+
     // called when we resize the canvas (and also initially) warning!
     // resizing resets the entire canvas context (e.g. ctx.fillStyle).
-    function setSize (canvasWidth, canvasHeight) {
-        width = canvasWidth;
-        height = canvasHeight;
+    function setCanvas(canvas) {
 
-        GMSTATE.arenaSize.xmax = width - WALLWIDTH;
-        GMSTATE.arenaSize.ymax = height - WALLWIDTH;
+        ctx = canvas.getContext('2d');
+        width = canvas.width;
+        height = canvas.height;
+
+        GMSTATE.arenaSize.xmax = width - wallwidth;
+        GMSTATE.arenaSize.ymax = height - wallwidth;
 
         stars1 = new Starfield(20, 0.2, 0.001, true, "#FFF");
         stars2 = new Starfield(50, 0.4, 0.001, false, "#F00");
@@ -155,53 +164,51 @@ var GM = (function () {
 
     // general function for drawing a 'sprite' at a given angle, used
     // to draw ships and bullets.
-    function drawSprite (sprite) { 
-	     ctx.save(); 
-	     ctx.translate(sprite.x + sprite.hwidth, sprite.y + sprite.hheight);
-	     ctx.rotate(sprite.angle);
+    function drawSprite(sprite) {
+        ctx.save();
+        ctx.translate(sprite.x + sprite.hwidth, sprite.y + sprite.hheight);
+        ctx.rotate(sprite.angle);
         if (sprite.alpha) {
             ctx.globalAlpha = sprite.alpha;
         }
-	     ctx.drawImage(sprite.img, -sprite.hwidth, -sprite.hheight);
-	     ctx.restore(); 
+        ctx.drawImage(sprite.img, -sprite.hwidth, -sprite.hheight);
+        ctx.restore();
     }
 
-    function addBullet (num, bullet) {
+    function addBullet(num, bullet) {
         if (num === 1) {
             bullets1.push(bullet);
-        }
-        else {
+        } else {
             bullets2.push(bullet);
         }
     }
 
     // this uses augmented Array method (remove), see util.js
-    function removeBullet (num, bullet) {
+    function removeBullet(num, bullet) {
         if (num === 1) {
             bullets1.remove(bullet);
-        }
-        else {
+        } else {
             bullets2.remove(bullet);
         }
     }
 
-    function drawArenaRects () {
+    function drawArenaRects() {
         var i, rl, r;
         rl = GMSTATE.arenaRects.length;
         ctx.fillStyle = '#FFF';
-        for (i = 0; i < rl; ++i) {
+        for (i = 0; i < rl; i += 1) {
             r = GMSTATE.arenaRects[i];
             ctx.fillRect(r.x, r.y, r.width, r.height);
         }
     }
 
     // health bars above ships
-    function drawHealth () {
+    function drawHealth() {
         var i, ships, s;
         ships = [Ship1, Ship2];
-        
+
         ctx.save();
-        for (var i = 0; i != ships.length; ++i) {
+        for (i = 0; i !== ships.length; i += 1) {
             s = ships[i];
             if (!s.dead) {
                 // white rectangle
@@ -209,40 +216,37 @@ var GM = (function () {
                 ctx.fillRect(s.x, s.y - 15, 40, 5);
                 if (s.health < 30) {
                     ctx.fillStyle = '#FF0000';
-                }
-                else if (s.health < 60) {
+                } else if (s.health < 60) {
                     ctx.fillStyle = '#FF6C00';
-                }
-                else {
+                } else {
                     ctx.fillStyle = '#00FF00';
                 }
-                ctx.fillRect(s.x, s.y - 15, Math.floor(0.4*Ship1.health), 5);
+                ctx.fillRect(s.x, s.y - 15, Math.floor(0.4 * Ship1.health), 5);
             }
         }
         ctx.restore();
     }
 
     // 'halo' (circle) around ship currently ahead
-    function drawLeader () {
+    function drawLeader() {
         var lead;
         if (Ship1.health > Ship2.health) {
             lead = Ship1;
-        }
-        else if (Ship2.health > Ship1.health) {
+        } else if (Ship2.health > Ship1.health) {
             lead = Ship2;
         }
 
         if (lead) {
             ctx.beginPath();
             ctx.arc(lead.x + lead.hwidth, lead.y + lead.hheight,
-                    15,0,2*Math.PI);
+                    15, 0, 2 * Math.PI);
             ctx.stroke();
         }
     }
 
     // main draw function (called every frame)
-    function draw () {
-        var i, olength, psize, key, myid, ship;
+    function draw() {
+        var i;
 
         // draw background
         stars1.draw();
@@ -253,12 +257,12 @@ var GM = (function () {
         drawHealth();
 
         if (GMSTATE.isDead) {
-            ctx.fillText(deadText, 
+            ctx.fillText(deadText,
                          width / 2 - 400, height / 2 - 150);
-        }            
+        }
 
         if (!inPlay) {
-            ctx.fillText("Press any key to start", 
+            ctx.fillText("Press any key to start",
                          width / 2 - 330, height / 2 - 50);
         }
 
@@ -273,10 +277,10 @@ var GM = (function () {
         drawLeader();
 
         // bullets
-        for (i = 0; i !== bullets1.length; ++i) {
+        for (i = 0; i !== bullets1.length; i += 1) {
             drawSprite(bullets1[i]);
         }
-        for (i = 0; i !== bullets2.length; ++i) {
+        for (i = 0; i !== bullets2.length; i += 1) {
             drawSprite(bullets2[i]);
         }
     }
@@ -286,36 +290,26 @@ var GM = (function () {
         score1 = document.getElementById("p1score");
         score2 = document.getElementById("p2score");
 
-        score1.innerHTML = parseInt(score1.innerHTML) + inc1;
-        score2.innerHTML = parseInt(score2.innerHTML) + inc2;
-    }
-
-    // initialise ships etc.
-    function setGameStart() {
-        inPlay = false;
-        GMSTATE.isDead = false;
-        Ship1.reset([0.05*width, 0.8*height]);
-        Ship2.reset([0.9*width, 0.1*height]);
+        score1.innerHTML = parseInt(score1.innerHTML, 10) + inc1;
+        score2.innerHTML = parseInt(score2.innerHTML, 10) + inc2;
     }
 
     // called by main update fn if we are currently in 'dead' state
-    function updateDead (dt) {
+    function updateDead(dt) {
         if (!GMSTATE.isDead) {
             // first time we know about dead
             bullets1 = [];
             bullets2 = [];
             if (Ship1.dead && Ship2.dead) {
                 deadText = 'DRAW';
-            }
-            else if (Ship1.dead) {
+            } else if (Ship1.dead) {
                 deadText = '2P WINS';
-            }
-            else if (Ship2.dead) {
+            } else if (Ship2.dead) {
                 deadText = '1P WINS';
             }
             GMSTATE.isDead = true;
             deadTime = 0;
-            incrementScores(Ship2.dead ? 1: 0, Ship1.dead ? 1: 0);
+            incrementScores(Ship2.dead ? 1 : 0, Ship1.dead ? 1 : 0);
             JUKE.jukebox.playSfx('dead');
         }
         deadTime += dt;
@@ -327,8 +321,8 @@ var GM = (function () {
     }
 
     // main update function (called every frame)
-    function update (dt) {
-        var key, i, j, vels, v1, v2;
+    function update(dt) {
+        var i;
 
         if (!inPlay) {
             return;
@@ -341,13 +335,13 @@ var GM = (function () {
             updateDead(dt);
         }
 
-        for (i = 0; i < bullets1.length; i++) {
+        for (i = 0; i < bullets1.length; i += 1) {
             bullets1[i].update(dt);
         }
-        for (i = 0; i < bullets2.length; i++) {
+        for (i = 0; i < bullets2.length; i += 1) {
             bullets2[i].update(dt);
         }
-        
+
         COLL.collideShip(Ship1, Ship2);
         COLL.collideBullets(Ship1, bullets2);
         COLL.collideBullets(Ship2, bullets1);
@@ -359,16 +353,15 @@ var GM = (function () {
     }
 
     // process user input (called every frame)
-    function processInput () {
+    function processInput() {
+        var i;
 
         if (inPlay) {
             Ship1.processInput(KEY.pressed);
             Ship2.processInput(KEY.pressed);
-        }
-        else {
+        } else {
             // wait on keydown event
-            var i;
-            for (i = 0; i < KEY.events.length; ++i) {
+            for (i = 0; i < KEY.events.length; i += 1) {
                 if (KEY.events[i].down) {
                     inPlay = true;
                 }
@@ -379,73 +372,70 @@ var GM = (function () {
     }
 
     // called by window.onload
-    function init () {
-        var x;
+    function init() {
+        var x, mainDraw;
 
         // configure canvas
         CN.setCanvasSize();
-    
+
         // set game state to start
         setGameStart();
 
         // requestAnimationFrame
-       (function(){
-           var vendors = ['ms', 'moz', 'webkit', 'o'];
-           for(x = 0; x < vendors.length && !window.requestAnimFrame; ++x) {
-               window.requestAnimFrame = window[vendors[x]+'RequestAnimationFrame'];
-           }
-       }());
+        (function () {
+            var vendors = ['ms', 'moz', 'webkit', 'o'];
+            for (x = 0; x < vendors.length && !window.requestAnimFrame; x += 1) {
+                window.requestAnimFrame = window[vendors[x] + 'RequestAnimationFrame'];
+            }
+        }());
 
         // we use setInterval for the logic, and requestAnimationFrame
         // for the *drawing only*. If requestAnimationFrame is not
         // supported, the entire game loop is executed by a single
         // setTimeout call (hence why we don't have a setTimeout
         // fallback above).
-        var mainDraw;
         if (!window.requestAnimFrame) {
             mainDraw = draw;
-        }
-        else {
-            mainDraw = function () {};
+        } else {
+            mainDraw = function () { return; };
         }
 
         // logic only (and draw if requestAnimationFrame not supported)
         function main() {
-	         var now = Date.now();
-	         var dt = now - then;
-	         processInput();
+            var now = Date.now(),
+                dt = now - then;
+            processInput();
             update(dt / 1000);
             mainDraw();
-	         then = now;
+            then = now;
         }
 
-        window.setInterval(main, 1000 / FPS);
-            
-        if (window.requestAnimFrame) {
-            function keepDrawing() {
-                draw();
-                window.requestAnimFrame(keepDrawing);
-            }
+        window.setInterval(main, 1000 / fps);
+
+        function keepDrawing() {
+            draw();
             window.requestAnimFrame(keepDrawing);
         }
-    };
+
+        if (window.requestAnimFrame) {
+            window.requestAnimFrame(keepDrawing);
+        }
+    }
 
     // called via select box on the html page
     function setAi(aiString) {
         if (aiString === "AI") {
             Ship2.isAi = true;
-        }
-        else {
+        } else {
             Ship2.isAi = false;
         }
     }
-    
+
     // public API
-    return {setSize: setSize,
+    return {setCanvas: setCanvas,
             init: init,
             addBullet: addBullet,
             removeBullet: removeBullet,
             setAi: setAi
-            }
-
+            };
 }());
