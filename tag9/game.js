@@ -407,7 +407,7 @@ var GM = (function () {
             var now = Date.now(),
                 // time elapsed since last tick in s
                 dt = (now - then) / 1000;
-            GMSTATE += dt;
+            GMSTATE.gameTime += dt;
             processInput();
             update(dt);
             mainDraw();
