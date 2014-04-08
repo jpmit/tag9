@@ -223,7 +223,7 @@ var GM = (function () {
                 } else {
                     ctx.fillStyle = '#00FF00';
                 }
-                ctx.fillRect(s.x, s.y - 15, Math.floor(0.4 * Ship1.health), 5);
+                ctx.fillRect(s.x, s.y - 15, Math.floor(0.4 * s.health), 5);
             }
         }
         ctx.restore();
