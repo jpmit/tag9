@@ -40,6 +40,7 @@ var GM = (function () {
         height,
         Ship1 = new Ship([-100, -100], 1),
         Ship2 = new Ship([-100, -100], 2),
+        eps = 0.000001, // for floating point arithmetic
         bullets1 = [],
         bullets2 = [],
         inPlay,
@@ -192,6 +193,7 @@ var GM = (function () {
         } else {
             bullets2.remove(bullet);
         }
+        console.log(Ship1.health, Ship2.health);
     }
 
     function drawArenaRects() {
@@ -232,9 +234,9 @@ var GM = (function () {
     // 'halo' (circle) around ship currently ahead
     function drawLeader() {
         var lead;
-        if (Ship1.health > Ship2.health) {
+        if (Ship1.health > Ship2.health + eps) {
             lead = Ship1;
-        } else if (Ship2.health > Ship1.health) {
+        } else if (Ship2.health > Ship1.health + eps) {
             lead = Ship2;
         }
 
@@ -300,19 +302,27 @@ var GM = (function () {
     function updateDead(dt) {
         if (!GMSTATE.isDead) {
             // first time we know about dead
+            JUKE.jukebox.playSfx('dead');
             bullets1 = [];
             bullets2 = [];
-            if (Ship1.dead && Ship2.dead) {
-                deadText = 'DRAW';
-            } else if (Ship1.dead) {
-                deadText = '2P WINS';
-            } else if (Ship2.dead) {
+            // figure out who died (maybe both)
+            console.log(Ship1.health, Ship2.health);
+            if (Ship1.health < Ship2.health - eps) {
+                if (Ship2.isAi) {
+                    deadText = 'AI WINS';
+                } else {
+                    deadText = '2P WINS';
+                }
+                incrementScores(0, 1);
+            } else if (Ship2.health < Ship1.health - eps) {
                 deadText = '1P WINS';
+                incrementScores(1, 0);
+            } else {
+                deadText = 'DRAW';
+                incrementScores(1, 1);
             }
             GMSTATE.isDead = true;
             deadTime = 0;
-            incrementScores(Ship2.dead ? 1 : 0, Ship1.dead ? 1 : 0);
-            JUKE.jukebox.playSfx('dead');
         }
         deadTime += dt;
 

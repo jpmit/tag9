@@ -318,7 +318,7 @@ function Ship(pos, shipNum) {
         // reduce health
         if (!GMSTATE.isDead) {
 
-            this.health = this.health - SHIP.decaySpeed * dt;
+            this.health -= SHIP.decaySpeed * dt;
             // 5 seconds left (assuming we don't get hit)
             if (this.health < 5 * SHIP.decaySpeed) {
                 JUKE.jukebox.playSfx('alarm');
