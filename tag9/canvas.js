@@ -18,8 +18,14 @@ var CN = (function () {
         return canvas;
     }
 
+    // called by game once loading complete
+    function showCanvas() {
+        canvas.style.display = 'block';
+    }
+
     // public API
-    return {setCanvasSize: setCanvasSize};
+    return {setCanvasSize: setCanvasSize,
+            showCanvas: showCanvas};
 }());
 
 window.onresize = CN.setCanvasSize;

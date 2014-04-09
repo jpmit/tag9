@@ -54,12 +54,33 @@ select {
     margin-top: 9px;
 }
 
+#loader {
+    height: 100%;
+    width: 100%;
+    background-color: black;
+}
+
+img {
+    display: block;
+    margin: auto;
+}
+
+.load {
+    display: block;
+    margin: auto;
+    padding-top: 100px;
+    padding-bottom: 50px;
+    text-align: center;
+}
+
 #topbar {
     height: 10%;
     background-color: black;
+    display: none;
 }
 
 canvas {
 	 background-color: black;
-    display: block; /* remove scrollbars */
+/*    display: block; *//* remove scrollbars */
+    display: none;
 }

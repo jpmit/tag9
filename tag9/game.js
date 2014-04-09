@@ -414,6 +414,12 @@ var GM = (function () {
             then = now;
         }
 
+        // display the div
+        document.getElementById("loader").style.display = 'none';
+        document.getElementById("topbar").style.display = 'block';
+        CN.showCanvas();
+
+
         window.setInterval(main, 1000 / fps);
 
         function keepDrawing() {
