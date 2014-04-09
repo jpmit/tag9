@@ -135,8 +135,8 @@ var GM = (function () {
     function setGameStart() {
         inPlay = false;
         GMSTATE.isDead = false;
-        Ship1.reset([0.05 * width, 0.8 * height]);
-        Ship2.reset([0.9 * width, 0.1 * height]);
+        Ship1.reset([0.9 * width, 0.1 * height]);
+        Ship2.reset([0.05 * width, 0.8 * height]);
     }
 
     // called when we resize the canvas (and also initially) warning!
