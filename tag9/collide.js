@@ -8,16 +8,23 @@
 var COLL = (function () {
     /*global BULLET*/
     /*global GM*/
+    /*global GMSTATE*/
     /*global JUKE*/
+
+    var lastShipCollideTime = 0;
     // check for collision between Ship1 and Ship2 and adjust
     // velocities accordingly.  Note the collision physics is 'made
     // up' for simplicity (i.e. not a 'true' elastic / inelastic
     // collision).
     function collideShip(Ship1, Ship2) {
-
         if ((Ship1.x + Ship1.width > Ship2.x) && (Ship1.x < Ship2.x + Ship2.width)
                 && (Ship1.y + Ship1.height > Ship2.y) && (Ship1.y < Ship2.y + Ship2.height)) {
 
+            // stop the ships getting 'stuck' in a collision
+            if (GMSTATE.gameTime < lastShipCollideTime + 0.8) {
+                return;
+            }
+            lastShipCollideTime = GMSTATE.gameTime;
             JUKE.jukebox.playSfx('shipcollide');
 
             if (((Ship1.vx > 0) && (Ship2.vx > 0)) || ((Ship1.vx < 0) && (Ship2.vx < 0))) {
