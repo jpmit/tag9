@@ -376,6 +376,7 @@ var GM = (function () {
             for (i = 0; i < KEY.events.length; i += 1) {
                 if (KEY.events[i].down) {
                     inPlay = true;
+                    GMSTATE.gameTime = 0;
                 }
             }
         }

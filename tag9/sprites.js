@@ -9,6 +9,7 @@
 /*global GMSTATE*/
 /*global JUKE*/
 /*global KEY*/
+/*global AI*/
 
 var SHIP = {
     vmax: 300,  // maximum speed
@@ -124,6 +125,8 @@ function Ship(pos, shipNum) {
     } else if (this.num === 2) {
         this.keys = KEY.player2;
     }
+    // am I AI?
+    this.isAi = false;
 
     this.reset = function (pos, angle) {
         this.health = SHIP.health;
@@ -140,7 +143,6 @@ function Ship(pos, shipNum) {
         this.thruster = false;
         this.fired = false;
         this.alpha = 1;
-        this.isAi = false;
         this.tSinceFired = 1000;
     };
 
@@ -153,7 +155,8 @@ function Ship(pos, shipNum) {
 
         // TODO: implement AI
         if (this.isAi) {
-            return;
+            // get pressed keys
+            pressed = AI.getpressed(this);
         }
 
         if (this.thruster) {
