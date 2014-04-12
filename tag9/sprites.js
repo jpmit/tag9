@@ -153,10 +153,9 @@ function Ship(pos, shipNum) {
     this.processInput = function (pressed) {
         var a, keys = this.keys;
 
-        // TODO: implement AI
         if (this.isAi) {
-            // get pressed keys
-            pressed = AI.getpressed(this);
+            // all of the AI is contained in the pressed keys
+            pressed = AI.getPressed(this);
         }
 
         if (this.thruster) {
@@ -245,6 +244,12 @@ function Ship(pos, shipNum) {
             this.angle = this.angle - dt * SHIP.rotv;
         } else if (this.rot === SHIP.rightRotate) {
             this.angle = this.angle + dt * SHIP.rotv;
+        }
+        // angle should be in (-pi, pi]
+        if (this.angle > 2 * Math.PI) {
+            this.angle -= 2 * Math.PI;
+        } else if (this.angle < 0) {
+            this.angle += 2 * Math.PI;
         }
 
         // create bullet if fired

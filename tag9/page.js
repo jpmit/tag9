@@ -54,6 +54,10 @@
         GM.setAi(newtxt);
     };
 
+    // uncomment for configuring AI
+    //GM.setAi("AI");
+    //JUKE.jukebox.mute();
+
     // health decay time
     dtime.onchange = function () {
         var value = dtime.value;

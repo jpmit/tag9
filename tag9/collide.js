@@ -24,6 +24,12 @@ var COLL = (function () {
             if (GMSTATE.gameTime < lastShipCollideTime + 0.8) {
                 return;
             }
+
+            // don't allow collision if one ship is dead
+            if (GMSTATE.isDead) {
+                return;
+            }
+
             lastShipCollideTime = GMSTATE.gameTime;
             JUKE.jukebox.playSfx('shipcollide');
 

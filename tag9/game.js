@@ -29,6 +29,7 @@ var GM = (function () {
     /*global COLL*/
     /*global KEY*/
     /*global CN*/
+    /*global AI*/
 
     // frames per second for the logic (and the rendering if
     // RequestAnimationFrame is not supported)
@@ -136,6 +137,7 @@ var GM = (function () {
     function setGameStart() {
         inPlay = false;
         GMSTATE.isDead = false;
+        AI.reset();
         Ship1.reset([0.9 * width, 0.1 * height]);
         Ship2.reset([0.05 * width, 0.8 * height]);
     }
@@ -193,7 +195,6 @@ var GM = (function () {
         } else {
             bullets2.remove(bullet);
         }
-        console.log(Ship1.health, Ship2.health);
     }
 
     function drawArenaRects() {
@@ -306,7 +307,6 @@ var GM = (function () {
             bullets1 = [];
             bullets2 = [];
             // figure out who died (maybe both)
-            console.log(Ship1.health, Ship2.health);
             if (Ship1.health < Ship2.health - eps) {
                 if (Ship2.isAi) {
                     deadText = 'AI WINS';
@@ -452,11 +452,19 @@ var GM = (function () {
         }
     }
 
+    function getShip(num) {
+        if (num === 1) {
+            return Ship1;
+        }
+        return Ship2;
+    }
+
     // public API
     return {setCanvas: setCanvas,
             init: init,
             addBullet: addBullet,
             removeBullet: removeBullet,
+            getShip: getShip,
             setAi: setAi
             };
 }());
