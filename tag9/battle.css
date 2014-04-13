@@ -38,11 +38,11 @@ button {
     position: absolute;
     left: 50px;
     down: 100px;
-    width: 200px;
+    width: 230px;
     height: 350px;
     background: black;
     display: none;
-    font-size: 0.9em;
+    font-size: 0.8em;
 }
 
 #sbutton {
