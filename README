@@ -1,9 +1,21 @@
 Space Battle
 ------------
-Entry in 'The Arbitrary Game Jam 9' by 'jpmit'.
+Entry in 'The Arbitrary Game Jam 9' (48 hour jam) by 'jpmit'.
 
-Also available in the Google chrome webstore, see:
+This is an HTML5 game, written in javascript, using the 'canvas'
+element.  It should work in virtually all modern browsers.  It can be
+played as a local two player game (i.e. with both players using the
+same keyboard) or single player vs AI.
+
+The theme I chose to incorporate is 'decay'; each player's health
+decays in time.  The idea is that this could lead to new strategies
+for winning, such as running from your opponent.
+
+The game is also available in the Google chrome webstore, see:
 https://chrome.google.com/webstore/detail/space-battle/feelckelhfonjfldljeagkodbilnlppc
+
+Alternatively, to play instantly navigate to:
+http://gamedevhost.nfshost.com/tag9/battle.html
 
 Credits
 -------
